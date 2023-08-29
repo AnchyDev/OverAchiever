@@ -59,9 +59,20 @@ uint32 OverAchieverPlayerScript::GetAchievementPointsFromDB(Player* player)
         std::vector<uint32> achievements;
         QueryResult qResult = CharacterDatabase.Query("SELECT achievement FROM character_achievement WHERE guid = {}", player->GetGUID().GetRawValue());
 
+        if (!qResult ||
+            qResult->GetRowCount() < 1)
+        {
+            return 0;
+        }
+
         do
         {
             Field* fields = qResult->Fetch();
+            if (fields->IsNull())
+            {
+                return 0;
+            }
+
             achievements.push_back(fields[0].Get<uint32>());
             
         } while (qResult->NextRow());
