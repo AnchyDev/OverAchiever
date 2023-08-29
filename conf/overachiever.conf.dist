@@ -7,3 +7,4 @@
 OverAchiever.Enabled = 0
 OverAchiever.RewardId = 37711
 OverAchiever.RewardFrequencySeconds = 30
+OverAchiever.RewardMultiplier = 0.1

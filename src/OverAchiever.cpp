@@ -33,13 +33,18 @@ void OverAchieverPlayerScript::OnUpdate(Player* player, uint32 p_time)
         return;
     }
 
+    if (player->isAFK())
+    {
+        return;
+    }
+
     uint32 points = GetPointsForPlayer(player);
     float constant = 100;
-    float multi = 0.1;
+    float multi = sConfigMgr->GetOption<float>("OverAchiever.RewardMultiplier", 0.1);
     float amount = 1 + points / constant * multi;
-    player->AddItem(37711, amount);
+    uint32 reward = sConfigMgr->GetOption<uint32>("OverAchiever.RewardId", 37711);
 
-    ChatHandler(player->GetSession()).SendSysMessage(Acore::StringFormatFmt("Rewarding amount: {}", amount));
+    player->AddItem(reward, amount);
 }
 
 uint32 OverAchieverPlayerScript::GetAchievementPointsFromDB(Player* player)
