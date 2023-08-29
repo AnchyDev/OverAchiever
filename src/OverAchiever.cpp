@@ -61,7 +61,14 @@ uint32 OverAchieverPlayerScript::GetAchievementPointsFromDB(Player* player)
             
         } while (qResult->NextRow());
 
-        return achievements.size();
+        uint32 sum = 0;
+        for (auto it = achievements.begin(); it != achievements.end(); ++it)
+        {
+            auto entry = sAchievementStore.LookupEntry(*it);
+            sum += entry->points;
+        }
+
+        return sum;
     }
     catch (std::exception ex)
     {
