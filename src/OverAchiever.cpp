@@ -29,7 +29,7 @@ void OverAchieverPlayerScript::OnUpdate(Player* player, uint32 p_time)
         return;
     }
 
-    auto checkFrequencySeconds = sConfigMgr->GetOption<uint32>("OverAchiever.RewardFrequencySeconds", 30);
+    auto checkFrequencySeconds = sConfigMgr->GetOption<uint32>("OverAchiever.RewardFrequencySeconds", 3600);
 
     auto loginTime = player->m_logintime;
     auto currentTime = GameTime::GetGameTime().count();
@@ -61,7 +61,7 @@ void OverAchieverPlayerScript::OnUpdate(Player* player, uint32 p_time)
 
     uint32 points = GetPointsForPlayer(player);
     float constant = 100;
-    float multi = sConfigMgr->GetOption<float>("OverAchiever.RewardMultiplier", 0.1);
+    float multi = sConfigMgr->GetOption<float>("OverAchiever.RewardMultiplier", 5);
     float amount = 1 + points / constant * multi;
     uint32 reward = sConfigMgr->GetOption<uint32>("OverAchiever.RewardId", 37711);
 
