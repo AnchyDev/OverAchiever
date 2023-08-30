@@ -95,7 +95,6 @@ uint32 OverAchieverPlayerScript::GetAchievementPointsFromDB(Player* player)
             }
 
             achievements.push_back(fields[0].Get<uint32>());
-            
         } while (qResult->NextRow());
 
         uint32 sum = 0;
