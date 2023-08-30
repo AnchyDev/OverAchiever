@@ -6,16 +6,19 @@
 #include "CharacterDatabase.h"
 #include "Player.h"
 #include "ScriptMgr.h"
+#include "GameTime.h"
 
 #include <unordered_map>
 #include <vector>
 
+struct OverAchieverPlayerInfo {
+    uint32 achievementPoints;
+    std::vector<uint32> rewardIndexes;
+};
+
 class OverAchieverPlayerScript : PlayerScript {
 public:
-    OverAchieverPlayerScript() : PlayerScript("OverAchieverPlayerScript")
-    {
-        currentFrequencyMS = 0;
-    }
+    OverAchieverPlayerScript() : PlayerScript("OverAchieverPlayerScript") {}
 
 private:
     void OnLogin(Player* /*player*/) override;
@@ -25,8 +28,11 @@ private:
     void UpdatePointsForPlayer(Player* /*player*/, uint32 /*points*/);
     uint32 GetPointsForPlayer(Player* /*player*/);
 
-    uint32 currentFrequencyMS;
-    std::unordered_map<uint64, uint32> achievementPoints;
+    bool HasRewardedIndex(Player* /*player*/, uint32 /*rewardIndex*/);
+    void SetRewardedIndex(Player* /*player*/, uint32 /*rewardIndex*/);
+    void ResetRewardedIndexes(Player* /*player*/);
+
+    std::unordered_map<uint64, OverAchieverPlayerInfo> playerInfos;
 };
 
 #endif // MODULE_OVERACHIEVER_H

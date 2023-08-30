@@ -7,6 +7,7 @@ void OverAchieverPlayerScript::OnLogin(Player* player)
         return;
     }
 
+    ResetRewardedIndexes(player);
     auto points = GetAchievementPointsFromDB(player);
     UpdatePointsForPlayer(player, points);
 }
@@ -18,16 +19,6 @@ void OverAchieverPlayerScript::OnUpdate(Player* player, uint32 p_time)
         return;
     }
 
-    auto checkFrequency = sConfigMgr->GetOption<uint32>("OverAchiever.RewardFrequencySeconds", 30);
-    currentFrequencyMS += p_time;
-
-    if ((currentFrequencyMS / 1000) < checkFrequency)
-    {
-        return;
-    }
-
-    currentFrequencyMS = 0;
-
     if (!player)
     {
         return;
@@ -37,6 +28,36 @@ void OverAchieverPlayerScript::OnUpdate(Player* player, uint32 p_time)
     {
         return;
     }
+
+    auto checkFrequencySeconds = sConfigMgr->GetOption<uint32>("OverAchiever.RewardFrequencySeconds", 30);
+
+    auto loginTime = player->m_logintime;
+    auto currentTime = GameTime::GetGameTime().count();
+    auto timePassed = currentTime - loginTime;
+
+    //LOG_INFO("module", "Epoch | Login Time: {}, CurrentTime: {}, Passed: {}", loginTime, currentTime, timePassed);
+
+    if (timePassed < checkFrequencySeconds)
+    {
+        return;
+    }
+
+    uint32 rewardIndex = timePassed / checkFrequencySeconds;
+
+    if ((timePassed % checkFrequencySeconds) != 0)
+    {
+        return;
+    }
+
+    //LOG_INFO("module", "Reward Index: {}", rewardIndex);
+    if (HasRewardedIndex(player, rewardIndex))
+    {
+        //LOG_INFO("module", "Already rewarded for index {}.", rewardIndex);
+        return;
+    }
+
+    SetRewardedIndex(player, rewardIndex);
+    //LOG_INFO("module", "Saved reward for index {}.", rewardIndex);
 
     uint32 points = GetPointsForPlayer(player);
     float constant = 100;
@@ -103,15 +124,21 @@ void OverAchieverPlayerScript::UpdatePointsForPlayer(Player* player, uint32 poin
     }
 
     auto guid = player->GetGUID().GetRawValue();
-    auto ptr = achievementPoints.find(guid);
+    auto it = playerInfos.find(guid);
 
-    if (ptr == achievementPoints.end())
+    if (it == playerInfos.end())
     {
-        achievementPoints.emplace(guid, points);
+        OverAchieverPlayerInfo pInfo;
+        std::vector<uint32> rewards;
+
+        pInfo.achievementPoints = points;
+        pInfo.rewardIndexes = rewards;
+
+        playerInfos.emplace(guid, pInfo);
     }
     else
     {
-        ptr->second = points;
+        it->second.achievementPoints = points;
     }
 }
 
@@ -123,16 +150,95 @@ uint32 OverAchieverPlayerScript::GetPointsForPlayer(Player* player)
     }
 
     auto guid = player->GetGUID().GetRawValue();
-    auto ptr = achievementPoints.find(guid);
+    auto it = playerInfos.find(guid);
 
-    if (ptr == achievementPoints.end())
+    if (it == playerInfos.end())
     {
         return 0;
     }
     else
     {
-        return ptr->second;
+        return it->second.achievementPoints;
     }
+}
+
+bool OverAchieverPlayerScript::HasRewardedIndex(Player* player, uint32 rewardIndex)
+{
+    if (!player)
+    {
+        return false;
+    }
+
+    auto guid = player->GetGUID().GetRawValue();
+    auto it = playerInfos.find(guid);
+
+    if (it == playerInfos.end())
+    {
+        return false;
+    }
+
+    auto rewards = it->second.rewardIndexes;
+    auto it2 = std::find(rewards.begin(), rewards.end(), rewardIndex);
+
+    if (it2 == rewards.end())
+    {
+        return false;
+    }
+
+    return true;
+}
+
+void OverAchieverPlayerScript::SetRewardedIndex(Player* player, uint32 rewardIndex)
+{
+    if (!player)
+    {
+        return;
+    }
+
+    auto guid = player->GetGUID().GetRawValue();
+    auto it = playerInfos.find(guid);
+
+    if (it == playerInfos.end())
+    {
+        return;
+    }
+
+    std::vector<uint32>* rewards = &it->second.rewardIndexes;
+
+    for (auto it2 = rewards->begin(); it2 != rewards->end(); ++it2)
+    {
+        auto reward = *it2;
+        if (reward == rewardIndex)
+        {
+            return;
+        }
+    }
+
+    rewards->push_back(rewardIndex);
+}
+
+void OverAchieverPlayerScript::ResetRewardedIndexes(Player* player)
+{
+    if (!player)
+    {
+        return;
+    }
+
+    auto guid = player->GetGUID().GetRawValue();
+    auto it = playerInfos.find(guid);
+
+    if (it == playerInfos.end())
+    {
+        return;
+    }
+
+    std::vector<uint32>* rewards = &it->second.rewardIndexes;
+    if (!rewards)
+    {
+        return;
+    }
+
+    rewards->clear();
 }
 
 void SC_AddOverAchieverScripts()
