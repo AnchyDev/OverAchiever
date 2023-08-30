@@ -8,3 +8,4 @@ OverAchiever.Enabled = 0
 OverAchiever.RewardId = 37711
 OverAchiever.RewardFrequencySeconds = 3600
 OverAchiever.RewardMultiplier = 5
+OverAchiever.RewardMessage = |cffffffffYou have received |cff00ff00{}|cffffffff token(s) for being active.|r

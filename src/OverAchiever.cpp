@@ -66,6 +66,9 @@ void OverAchieverPlayerScript::OnUpdate(Player* player, uint32 /*p_time*/)
     uint32 reward = sConfigMgr->GetOption<uint32>("OverAchiever.RewardId", 37711);
 
     player->AddItem(reward, amount);
+
+    std::string message = sConfigMgr->GetOption<std::string>("OverAchiever.RewardMessage", "|cffffffffYou have received |cff00ff00{}|cffffffff token(s) for being active.|r");
+    ChatHandler(player->GetSession()).SendSysMessage(Acore::StringFormatFmt(message, amount));
 }
 
 uint32 OverAchieverPlayerScript::GetAchievementPointsFromDB(Player* player)
