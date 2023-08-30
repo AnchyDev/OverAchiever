@@ -12,7 +12,7 @@ void OverAchieverPlayerScript::OnLogin(Player* player)
     UpdatePointsForPlayer(player, points);
 }
 
-void OverAchieverPlayerScript::OnUpdate(Player* player, uint32 p_time)
+void OverAchieverPlayerScript::OnUpdate(Player* player, uint32 /*p_time*/)
 {
     if (!sConfigMgr->GetOption<bool>("OverAchiever.Enabled", false))
     {
