@@ -24,18 +24,11 @@ void OverAchieverPlayerScript::OnUpdate(Player* player, uint32 /*p_time*/)
         return;
     }
 
-    if (player->isAFK())
-    {
-        return;
-    }
-
     auto checkFrequencySeconds = sConfigMgr->GetOption<uint32>("OverAchiever.RewardFrequencySeconds", 3600);
 
     auto loginTime = player->m_logintime;
     auto currentTime = GameTime::GetGameTime().count();
     auto timePassed = currentTime - loginTime;
-
-    //LOG_INFO("module", "Epoch | Login Time: {}, CurrentTime: {}, Passed: {}", loginTime, currentTime, timePassed);
 
     if (timePassed < checkFrequencySeconds)
     {
@@ -49,15 +42,18 @@ void OverAchieverPlayerScript::OnUpdate(Player* player, uint32 /*p_time*/)
         return;
     }
 
-    //LOG_INFO("module", "Reward Index: {}", rewardIndex);
     if (HasRewardedIndex(player, rewardIndex))
     {
-        //LOG_INFO("module", "Already rewarded for index {}.", rewardIndex);
         return;
     }
 
     SetRewardedIndex(player, rewardIndex);
-    //LOG_INFO("module", "Saved reward for index {}.", rewardIndex);
+
+    // Skip this reward cycle, naughty.
+    if (player->isAFK())
+    {
+        return;
+    }
 
     uint32 points = GetPointsForPlayer(player);
     float constant = 100;
@@ -243,7 +239,53 @@ void OverAchieverPlayerScript::ResetRewardedIndexes(Player* player)
     rewards->clear();
 }
 
+ChatCommandTable OverAchieverCommandScript::GetCommands() const
+{
+    static ChatCommandTable oaCommandTable =
+    {
+        { "debug", HandleOADebugCommand, SEC_ADMINISTRATOR, Console::No }
+    };
+
+    static ChatCommandTable commandTable =
+    {
+        { "oa", oaCommandTable }
+    };
+
+    return commandTable;
+}
+
+bool OverAchieverCommandScript::HandleOADebugCommand(ChatHandler* handler)
+{
+    if (!handler)
+    {
+        handler->SetSentErrorMessage(true);
+        return false;
+    }
+
+    auto player = handler->GetPlayer();
+    if (!player)
+    {
+        handler->SetSentErrorMessage(true);
+        return false;
+    }
+
+    auto checkFrequencySeconds = sConfigMgr->GetOption<uint32>("OverAchiever.RewardFrequencySeconds", 3600);
+
+    auto loginTime = player->m_logintime;
+    auto currentTime = GameTime::GetGameTime().count();
+    auto timePassed = currentTime - loginTime;
+
+    uint32 rewardIndex = timePassed / checkFrequencySeconds;
+    uint32 nextReward = checkFrequencySeconds - (timePassed % checkFrequencySeconds);
+
+    handler->SendSysMessage(Acore::StringFormatFmt("[EPOCH] - Login: {}, Current: {}, Diff: {}", loginTime, currentTime, timePassed));
+    handler->SendSysMessage(Acore::StringFormatFmt("[MISC] - IsAFK: {}, RewardIndex: {}, NextReward: {}", player->isAFK() ? "true" : "false", rewardIndex, nextReward));
+
+    return true;
+}
+
 void SC_AddOverAchieverScripts()
 {
     new OverAchieverPlayerScript();
+    new OverAchieverCommandScript();
 }
